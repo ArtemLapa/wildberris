@@ -1,30 +1,69 @@
 const getGoods = () => {
-  const links = document.querySelectorAll(".navigation-link")
+  const links = document.querySelectorAll(".navigation-link"),
+    viewAll = document.querySelector(".more");
 
-  const getData = () => {
+  const renderGoods = (allGoods) => {
+    const goodsContainer = document.querySelector(".long-goods-list");
+
+    goodsContainer.innerHTML = "";
+
+    allGoods.forEach(good => {
+      const goodBlock = document.createElement("div");
+      goodBlock.classList.add("col-lg-3");
+      goodBlock.classList.add("col-sm-6");
+      goodBlock.innerHTML = `
+        <div class="goods-card">
+          <span class="label ${good.label ? null : "d-none"}">${good.label}</span>
+          <img src="db/${good.img}" alt="${good.name}" class="goods-image">
+          <h3 class="goods-title">${good.name}</h3>
+          <p class="goods-description">${good.description}</p>
+          <button class="button goods-card-btn add-to-cart" data-id="${good.id}">
+            <span class="button-price">$${good.price}</span>
+          </button>
+        </div>
+      `;
+      goodsContainer.append(goodBlock);
+    });
+  };
+
+  const getData = (value, category) => {
     fetch("https://wildberri-db-default-rtdb.firebaseio.com/widlberri-db.json")
       .then((res) => res.json())
       .then((data) => {
-        localStorage.setItem("allGoods", JSON.stringify(data))
-        console.log(data)
+        const arr = category ? data.filter((item) => item[category] === value) : data;
+
+        localStorage.setItem("allGoods", JSON.stringify(arr));
+
+        if (window.location.pathname !== "/goods.html") {
+          window.location.href = "/goods.html";
+        } else {
+          renderGoods(arr);
+        }
       })
   };
 
   links.forEach((link) => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
-      getData();
+      const linkValue = link.textContent;
+      const category = link.dataset.field;
+      
+      getData(linkValue, category);
     })
   });
 
-  localStorage.setItem("goods", JSON.stringify({ name: "all" }));
+  if (localStorage.getItem("allGoods") && window.location.pathname === "/goods.html") {
+    renderGoods(JSON.parse(localStorage.getItem("allGoods")));
+  }
 
-  const goods = JSON.parse(localStorage.getItem("goods"));
-  console.log(goods)
+  if (viewAll) {
+    viewAll.addEventListener("click", (e) => {
+      e.preventDefault();
+      getData();
+    });
+  }
 
-  localStorage.removeItem("goods")
-
-  console.log(localStorage.getItem("goods"))
+  
 }
 
 getGoods();
